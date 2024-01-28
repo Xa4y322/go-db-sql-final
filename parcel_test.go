@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"fmt"
 	"math/rand"
 	"testing"
 	"time"
@@ -34,10 +33,7 @@ func getTestParcel() Parcel {
 func TestAddGetDelete(t *testing.T) {
 	// prepare
 	db, err := sql.Open("sqlite", "tracker.db")
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+	require.NoError(t, err)
 	defer db.Close() // настройте подключение к БД
 	store := NewParcelStore(db)
 	parcel := getTestParcel()
@@ -51,10 +47,11 @@ func TestAddGetDelete(t *testing.T) {
 	// получите только что добавленную посылку, убедитесь в отсутствии ошибки
 	// проверьте, что значения всех полей в полученном объекте совпадают со значениями полей в переменной parcel
 	p, err := store.Get(number)
-	require.Equal(t, parcel.Client, p.Client)
-	require.Equal(t, parcel.Status, p.Status)
-	require.Equal(t, parcel.Address, p.Address)
-	require.Equal(t, parcel.CreatedAt, p.CreatedAt)
+	require.NoError(t, err)
+	assert.Equal(t, parcel.Client, p.Client)
+	assert.Equal(t, parcel.Status, p.Status)
+	assert.Equal(t, parcel.Address, p.Address)
+	assert.Equal(t, parcel.CreatedAt, p.CreatedAt)
 	// delete
 	// удалите добавленную посылку, убедитесь в отсутствии ошибки
 	// проверьте, что посылку больше нельзя получить из БД
@@ -68,10 +65,7 @@ func TestAddGetDelete(t *testing.T) {
 func TestSetAddress(t *testing.T) {
 	// prepare
 	db, err := sql.Open("sqlite", "tracker.db")
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+	require.NoError(t, err)
 	defer db.Close()
 
 	store := NewParcelStore(db)
@@ -100,10 +94,7 @@ func TestSetAddress(t *testing.T) {
 func TestSetStatus(t *testing.T) {
 	// prepare
 	db, err := sql.Open("sqlite", "tracker.db")
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+	require.NoError(t, err)
 	defer db.Close()
 
 	store := NewParcelStore(db)
@@ -131,10 +122,7 @@ func TestSetStatus(t *testing.T) {
 func TestGetByClient(t *testing.T) {
 	// prepare
 	db, err := sql.Open("sqlite", "tracker.db")
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+	require.NoError(t, err)
 	defer db.Close() // настройте подключение к БД
 
 	parcels := []Parcel{
