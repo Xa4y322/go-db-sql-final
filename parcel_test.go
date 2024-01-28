@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -91,6 +92,7 @@ func TestSetAddress(t *testing.T) {
 	// получите добавленную посылку и убедитесь, что адрес обновился
 	p, err := store.Get(number)
 	require.Equal(t, newAddress, p.Address)
+	assert.Equal(t, newAddress, p.Address)
 
 }
 
@@ -121,6 +123,8 @@ func TestSetStatus(t *testing.T) {
 	// получите добавленную посылку и убедитесь, что статус обновился
 	p, err := store.Get(number)
 	require.Equal(t, nextStatus, p.Status)
+	assert.Equal(t, nextStatus, p.Status)
+
 }
 
 // TestGetByClient проверяет получение посылок по идентификатору клиента
@@ -170,8 +174,8 @@ func TestGetByClient(t *testing.T) {
 		// в parcelMap лежат добавленные посылки, ключ - идентификатор посылки, значение - сама посылка
 		// убедитесь, что все посылки из storedParcels есть в parcelMap
 		// убедитесь, что значения полей полученных посылок заполнены верно
-		p, err := parcelMap[parcel.Number]
-		require.True(t, err)
+		p, exists := parcelMap[parcel.Number]
+		require.True(t, exists)
 		require.Equal(t, p, parcel)
 	}
 }

@@ -18,7 +18,7 @@ func (s ParcelStore) Add(p Parcel) (int, error) {
 	res, err := s.db.Exec("INSERT INTO parcel (client, status, address, created_at) VALUES (:client, :status, :adress, :created_at)",
 		sql.Named("client", p.Client),
 		sql.Named("status", p.Status),
-		sql.Named("adress", p.Address),
+		sql.Named("address", p.Address),
 		sql.Named("created_at", p.CreatedAt),
 	)
 	if err != nil {
@@ -38,8 +38,7 @@ func (s ParcelStore) Add(p Parcel) (int, error) {
 func (s ParcelStore) Get(number int) (Parcel, error) {
 	// реализуйте чтение строки по заданному number
 	// здесь из таблицы должна вернуться только одна строка
-	row := s.db.QueryRow("SELECT * FROM parcel WHERE number = :number",
-		sql.Named("number", number))
+	row := s.db.QueryRow("SELECT number, client, status, address, created_at FROM parcel WHERE number = :number", sql.Named("number", number))
 	// заполните объект Parcel данными из таблицы
 	p := Parcel{}
 	err := row.Scan(&p.Number, &p.Client, &p.Status, &p.Address, &p.CreatedAt)
@@ -52,21 +51,25 @@ func (s ParcelStore) Get(number int) (Parcel, error) {
 func (s ParcelStore) GetByClient(client int) ([]Parcel, error) {
 	// реализуйте чтение строк из таблицы parcel по заданному client
 	// здесь из таблицы может вернуться несколько строк
-	rows, err := s.db.Query("SELECT * FROM parcel WHERE client = :client",
-		sql.Named("client", client))
+	rows, err := s.db.Query("SELECT number, client, status, address, created_at FROM parcel WHERE client = :client", sql.Named("client", client))
 	if err != nil {
-		return nil, fmt.Errorf(`GetByClient: не удалось чтение строки по клиенту %d: %w`, client, err)
+		return nil, err
 	}
 	defer rows.Close()
-	// заполните срез Parcel данными из таблицы
+
 	var res []Parcel
+
 	for rows.Next() {
 		p := Parcel{}
 		err := rows.Scan(&p.Number, &p.Client, &p.Status, &p.Address, &p.CreatedAt)
 		if err != nil {
-			return res, fmt.Errorf(`GetByClient: не удалось чтение строки по клиенту %d: %w`, client, err)
+			return nil, err
 		}
 		res = append(res, p)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
 
 	return res, nil
@@ -92,17 +95,13 @@ func (s ParcelStore) SetAddress(number int, address string) error {
 		return err
 	}
 
-	if p.Status == ParcelStatusRegistered {
-		_, err = s.db.Exec("UPDATE parcel SET address = :address WHERE number = :number",
-			sql.Named("address", address),
-			sql.Named("number", number),
-		)
+	if p.Status != ParcelStatusRegistered {
+		return err
 	}
-	if err != nil {
-		return fmt.Errorf(`SetAddress: не удалось поменять адрес у посылки %d: %w`, number, err)
-
-	}
-	return nil
+	_, err = s.db.Exec("UPDATE parcel SET address = :address WHERE number = :number",
+		sql.Named("number", number),
+		sql.Named("address", address))
+	return err
 }
 
 func (s ParcelStore) Delete(number int) error {
